@@ -1,0 +1,102 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatApp</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+    <h1 class="app-heading"></h1>
+    <div class="main">
+        <div class="message-container">
+            <ul class="message-list">
+                <!-- <li class="message">Hello <span>Aryan</span></li> -->
+            </ul>
+        </div>
+        <form id="message-form">
+            <input type="text" name="message-content" id="message-content" placeholder="Enter message">
+            <button type="submit">Send</button>
+        </form>
+
+        <div id="room-form">
+            <input type="text" name="room" id="room" placeholder="Enter room">
+            <button type="submit">Join</button>
+        </div>
+    </div>
+
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+
+
+        const socket = io("http://localhost:3000");
+        const message_form = document.getElementById("message-form");
+        const room_form = document.getElementById("room-form");
+        const room_form_button = document.querySelector("#room-form button");
+        const message_content = document.getElementById("message-content");
+        const room = document.getElementById("room");
+        const message_list = document.querySelector(".message-list");
+        const message_container = document.querySelector(".message-container");
+        const app_heading = document.querySelector(".app-heading");
+        var id = "";
+
+
+
+
+        socket.on("connect", function () {
+            console.log("Device connected with id: ", socket.id);
+            id = socket.id;
+            app_heading.innerHTML = `Client: ${id}`;
+        });
+
+        socket.on("disconnect", function () {
+            console.log("Device disconnected with id: ", socket.id);
+        });
+
+        message_form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const message = message_content.value;
+            if (message == "") return
+            displayMessage(message);
+            message_content.value = "";
+            const room_name = room.value;
+            console.log(room_name);
+            socket.emit("send-message", message, room_name);
+        });
+
+        room_form_button.addEventListener("click", (e) => {
+            const room_name = room.value;
+            socket.emit("join-room", room_name, message => {
+                displayMessage(message);
+            });
+        });
+
+        socket.on("receive-message", (message) => {
+            displayMessage2(message, id);
+        });
+
+
+        const displayMessage = (message) => {
+            const message_item = document.createElement("li");
+            message_item.classList.add("message");
+            console.log(id);
+            message_item.innerHTML = `${message}<span>${id}</span>`;
+            message_list.appendChild(message_item);
+            message_container.scrollTop = message_container.scrollHeight;
+        };
+
+        const displayMessage2 = (message) => {
+            const message_item = document.createElement("li");
+            message_item.classList.add("message2");
+            console.log(id);
+            message_item.innerHTML = `${message}<span>${id}</span>`;
+            message_list.appendChild(message_item);
+            message_container.scrollTop = message_container.scrollHeight;
+        };
+
+    </script>
+</body>
+
+</html>
